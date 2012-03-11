@@ -17,21 +17,13 @@ class  scf_dummy{
    public $_custom_options = array();
 
    function __construct(){
-
-      //these are for all the time - even if there are overrides
-      add_action( 'admin_init', array($this,'requires_wordpress_version'), 1 );           // checks version of plugin in DB and updates if needed.
-      //add_action( 'init', array($this,'ppr_save_metadata'),20,2 );         // save the custom fields
+      add_action( 'admin_init', array($this,'requires_wordpress_version'), 1 );
 
       if (isset( $_POST['scf_execute']) ) {
-         //$this->quickppr_redirects = $this->save_redirects($_POST['quickppr_redirects']);
-         //$this->updatemsg ='Quick Redirects Updated.';
-
-
-
          add_action( 'init', array($this,'get_options') );
          add_action( 'init', array($this,'active_cpt') );
 
-      } //if submitted, process the data
+      }
    }
 
    function create_posts($args){
@@ -70,13 +62,6 @@ class  scf_dummy{
         wp_update_attachment_metadata( $attach_id, $attach_data );
       }
    }
-
-
-         function doer_of_stuff() {
-               return  new WP_Error('broke', __("I've fallen and can't get up"));
-         }
-
-
 
    function active_cpt(){
       $local_cpt = $this->_cpt;
