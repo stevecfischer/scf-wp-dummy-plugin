@@ -1,6 +1,7 @@
 <?php
 /**
  * Plugin Name: SCF Dummy Content
+ * Description: Now On GIT
  *
  */
 
