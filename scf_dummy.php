@@ -5,6 +5,8 @@
  *
  */
 
+ 
+this is the trunk edition i think
 class  scf_dummy{ffffff
 
    public $_cpt = array('page', 'post', 'products' );
