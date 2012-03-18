@@ -4,10 +4,11 @@
  * Description: Now On GIT
  *
  */
-
- 
 this is the trunk edition i think
-class  scf_dummy{ffffff
+
+is this branch or trunk?
+lastname
+class  scf_dummy{
 
    public $_cpt = array('page', 'post', 'products' );
    public $_tax = array();
