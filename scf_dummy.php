@@ -5,7 +5,7 @@
  *
  */
 
-class  scf_dummy{
+class  scf_dummy{ffffff
 
    public $_cpt = array('page', 'post', 'products' );
    public $_tax = array();
