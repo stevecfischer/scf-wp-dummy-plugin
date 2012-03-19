@@ -3,7 +3,7 @@
  * Plugin Name: SCF Dummy Content
  *
  *
- */hmmm how to update?
+ */hmmm how to update
 class  scf_dummy{
 
    public $_cpt = array('page', 'post', 'products' );
