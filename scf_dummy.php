@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: SCF Dummy Content
- *
+ * testing commit from plugin directory
  */
 
 class  scf_dummy{
