@@ -4,7 +4,7 @@
  *
  *
  */
-class  scf_dummy{fsds
+class  scf_dummy{
 
    public $_cpt = array('page', 'post', 'products' );
    public $_tax = array();
