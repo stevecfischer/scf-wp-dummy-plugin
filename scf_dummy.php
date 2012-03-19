@@ -3,7 +3,7 @@
  * Plugin Name: SCF Dummy Content
  *
  *
- */
+ */fdsf
 class  scf_dummy{
 
    public $_cpt = array('page', 'post', 'products' );
