@@ -1,0 +1,9 @@
+Plugin Objectives for version 1.0:
+
+	create X posts
+	insert dummy content
+	upload and set featured image for each post
+	create X dummy Taxonomies
+	related Custom Post Types to respective Taxonomy
+	log each post created
+	on plugin deactivation move all post created by plugin to trash

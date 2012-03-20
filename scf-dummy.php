@@ -4,6 +4,17 @@
  *
  *
  */
+
+/*!
+ * @TODO
+ *    - incorporate taxonomy.
+ *      -create dummy taxonomy then related them to their respective CPT
+ *
+ *
+ * \author Steve (3/20/2012)
+ */
+
+
 class  scf_dummy{
 
    public $_cpt = array('page', 'post', 'products' );
@@ -18,33 +29,38 @@ class  scf_dummy{
 
    function __construct(){
       add_action( 'admin_init', array($this,'requires_wordpress_version'), 1 );
-
       if (isset( $_POST['scf_execute']) ) {
          add_action( 'init', array($this,'get_options') );
          add_action( 'init', array($this,'active_cpt') );
-
       }
    }
 
    function create_posts($args){
-
       $local_options = $this->_custom_options;
+
+      $title_helper_pattern = "/%%[\s\S]*?%%/";
+
+      if( preg_match($title_helper_pattern, $local_options['title'], $matches) ){
+         $title = preg_replace($title_helper_pattern, $args, $local_options['title']);
+      }else{
+         $title = $local_options['title'];
+      }
 
       // Create post object
       for ($i=1; $i<=$local_options['num_post_create']; $i++) {
            $my_post = array(
-              'post_title' => $local_options['title'].' '.$i,
+              'post_title' => $title.' '.$i,
               'post_content' => $local_options['content'],
               'post_status' => 'publish',
               'post_type' => $args
            );
 
            if(! $new_id = wp_insert_post( $my_post ) ){
-
               die('cannot create post');
            }
 
             $filename = '2012/03/testdenver.jpg';
+
             $wp_filetype = wp_check_filetype(basename($filename), null );
             $wp_upload_dir = wp_upload_dir();
                $attachment = array(
@@ -60,31 +76,48 @@ class  scf_dummy{
         require_once(ABSPATH . 'wp-admin/includes/image.php');
         $attach_data = wp_generate_attachment_metadata( $attach_id, $filename );
         wp_update_attachment_metadata( $attach_id, $attach_data );
+        update_post_meta($new_id,'_thumbnail_id',$attach_id);
       }
    }
 
    function active_cpt(){
-      $local_cpt = $this->_cpt;
-
-      foreach($local_cpt as $cpt){
-         $this->create_posts($cpt);
+      $local_options = $this->_custom_options;
+      foreach($local_options['cpt'] as $k => $v){
+         $this->create_posts($k);
       }
+   }
 
+   function scf_get_registered_post_types(){
+      $args=array(
+         'public'   => true,
+         '_builtin' => true
+      );
+      $output = 'objects'; // names or objects
+      $post_types=get_post_types('',$output);
+      foreach ($post_types as $post_type ) {
+        echo '<p>'. $post_type->name . '</p>';
+      }
+   }
+
+   function scf_registered_post_types(){
+      $args=array(
+         'public'   => true,
+         '_builtin' => true
+      );
+      $output = 'objects'; // names or objects
+      $post_types=get_post_types('',$output);
+      return $post_types;
    }
 
    function get_options(){
-      $this->_custom_options = $options = get_option('posk_options');
+      $this->_custom_options = $options = get_option('scfdc_options');
    }
 
-
    function create_featured_image(){
-
       $attach_id = wp_insert_attachment( $attachment, $filename, $post_id );
       $attach_data = wp_generate_attachment_metadata( $attach_id, $filename );
       wp_update_attachment_metadata( $attach_id,  $attach_data );
    }
-
-
 
    function requires_wordpress_version() {
       global $wp_version;
@@ -98,54 +131,29 @@ class  scf_dummy{
          }
       }
    }
-}/*
-===============================
+}
+/*===============================
 END OF CLASS
 ===============================*/
 
 
-
-// ------------------------------------------------------------------------
-// REGISTER HOOKS & CALLBACK FUNCTIONS:
-// ------------------------------------------------------------------------
-// HOOKS TO SETUP DEFAULT PLUGIN OPTIONS, HANDLE CLEAN-UP OF OPTIONS WHEN
-// PLUGIN IS DEACTIVATED AND DELETED, INITIALISE PLUGIN, ADD OPTIONS PAGE.
-// ------------------------------------------------------------------------
-
 // Set-up Action and Filter Hooks
-register_activation_hook(__FILE__, 'posk_add_defaults');
-register_uninstall_hook(__FILE__, 'posk_delete_plugin_options');
-add_action('admin_init', 'posk_init' );
-add_action('admin_menu', 'posk_add_options_page');
-add_filter( 'plugin_action_links', 'posk_plugin_action_links', 10, 2 );
-
-// --------------------------------------------------------------------------------------
-// CALLBACK FUNCTION FOR: register_uninstall_hook(__FILE__, 'posk_delete_plugin_options')
-// --------------------------------------------------------------------------------------
-// THIS FUNCTION RUNS WHEN THE USER DEACTIVATES AND DELETES THE PLUGIN. IT SIMPLY DELETES
-// THE PLUGIN OPTIONS DB ENTRY (WHICH IS AN ARRAY STORING ALL THE PLUGIN OPTIONS).
-// --------------------------------------------------------------------------------------
+register_activation_hook(__FILE__, 'scfdc_add_defaults');
+register_uninstall_hook(__FILE__, 'scfdc_delete_plugin_options');
+add_action('admin_init', 'scfdc_init' );
+add_action('admin_menu', 'scfdc_add_options_page');
+add_filter( 'plugin_action_links', 'scfdc_plugin_action_links', 10, 2 );
 
 // Delete options table entries ONLY when plugin deactivated AND deleted
-function posk_delete_plugin_options() {
-   delete_option('posk_options');
+function scfdc_delete_plugin_options() {
+   delete_option('scfdc_options');
 }
 
-// ------------------------------------------------------------------------------
-// CALLBACK FUNCTION FOR: register_activation_hook(__FILE__, 'posk_add_defaults')
-// ------------------------------------------------------------------------------
-// THIS FUNCTION RUNS WHEN THE PLUGIN IS ACTIVATED. IF THERE ARE NO THEME OPTIONS
-// CURRENTLY SET, OR THE USER HAS SELECTED THE CHECKBOX TO RESET OPTIONS TO THEIR
-// DEFAULTS THEN THE OPTIONS ARE SET/RESET.
-//
-// OTHERWISE, THE PLUGIN OPTIONS REMAIN UNCHANGED.
-// ------------------------------------------------------------------------------
-
 // Define default option settings
-function posk_add_defaults() {
-   $tmp = get_option('posk_options');
+function scfdc_add_defaults() {
+   $tmp = get_option('scfdc_options');
     if(($tmp['chk_default_options_db']=='1')||(!is_array($tmp))) {
-      delete_option('posk_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
+      delete_option('scfdc_options'); // so we don't have to reset all the 'off' checkboxes too! (don't think this is needed but leave for now)
       $arr = array(  "chk_button1" => "1",
                   "chk_button3" => "1",
                   "textarea_one" => "This type of control allows a large amount of information to be entered all at once. Set the 'rows' and 'cols' attributes to set the width and height.",
@@ -157,57 +165,36 @@ function posk_add_defaults() {
                   "rdo_group_one" => "one",
                   "rdo_group_two" => "two"
       );
-      update_option('posk_options', $arr);
+      update_option('scfdc_options', $arr);
    }
 }
 
-// ------------------------------------------------------------------------------
-// CALLBACK FUNCTION FOR: add_action('admin_init', 'posk_init' )
-// ------------------------------------------------------------------------------
-// THIS FUNCTION RUNS WHEN THE 'admin_init' HOOK FIRES, AND REGISTERS YOUR PLUGIN
-// SETTING WITH THE WORDPRESS SETTINGS API. YOU WON'T BE ABLE TO USE THE SETTINGS
-// API UNTIL YOU DO.
-// ------------------------------------------------------------------------------
-
 // Init plugin options to white list our options
-function posk_init(){
-   register_setting( 'posk_plugin_options', 'posk_options', 'posk_validate_options' );
+function scfdc_init(){
+   register_setting( 'scfdc_plugin_options', 'scfdc_options', 'scfdc_validate_options' );
 }
-
-// ------------------------------------------------------------------------------
-// CALLBACK FUNCTION FOR: add_action('admin_menu', 'posk_add_options_page');
-// ------------------------------------------------------------------------------
-// THIS FUNCTION RUNS WHEN THE 'admin_menu' HOOK FIRES, AND ADDS A NEW OPTIONS
-// PAGE FOR YOUR PLUGIN TO THE SETTINGS MENU.
-// ------------------------------------------------------------------------------
 
 // Add menu page
-function posk_add_options_page() {
-   add_options_page('Plugin Options Starter Kit Options Page', 'Plugin Options Starter Kit', 'manage_options', __FILE__, 'posk_render_form');
+function scfdc_add_options_page() {
+   add_options_page('SCF Dummy Content Options Page', 'SCF Dummy Content', 'manage_options', __FILE__, 'scfdc_render_form');
 }
 
-// ------------------------------------------------------------------------------
-// CALLBACK FUNCTION SPECIFIED IN: add_options_page()
-// ------------------------------------------------------------------------------
-// THIS FUNCTION IS SPECIFIED IN add_options_page() AS THE CALLBACK FUNCTION THAT
-// ACTUALLY RENDER THE PLUGIN OPTIONS FORM AS A SUB-MENU UNDER THE EXISTING
-// SETTINGS ADMIN MENU.
-// ------------------------------------------------------------------------------
-
 // Render the Plugin options form
-function posk_render_form() {
+function scfdc_render_form() {
    ?>
    <div class="wrap">
 
       <!-- Display Plugin Icon, Header, and Description -->
       <div class="icon32" id="icon-options-general"><br></div>
-      <h2>Plugin Options Starter Kit</h2>
-      <p>Below is a collection of sample controls you can use in your own Plugins. Or, you can analyse the code and learn how all the most common controls can be added to a Plugin options form. See the code for more details, it is fully commented.</p>
-
+      <h2>SCF Dummy Content</h2>
+      <p>Plugin will populate your site with dummy content</p>
+      <?php
+         echo '<img src="' .plugins_url( 'testdenver.jpg' , __FILE__ ). '" > ';
+      ?>
       <!-- Beginning of the Plugin Options Form -->
       <form method="post" action="options.php">
-         <?php settings_fields('posk_plugin_options'); ?>
-         <?php $options = get_option('posk_options'); ?>
+         <?php settings_fields('scfdc_plugin_options'); ?>
+         <?php $options = get_option('scfdc_options'); ?>
 
          <!-- Table Structure Containing Form Controls -->
          <!-- Each Plugin Option Defined on a New Table Row -->
@@ -217,22 +204,23 @@ function posk_render_form() {
                <th scope="row">Content to be added</th>
                <td>
                   <?php
-                     $args = array("textarea_name" => "posk_options[content]");
-                     wp_editor( $options['content'], "posk_options[content]", $args );
+                     $args = array("textarea_name" => "scfdc_options[content]");
+                     wp_editor( $options['content'], "scfdc_options[content]", $args );
                   ?>
-                  <br /><span style="color:#666666;margin-left:2px;">Add a comment here to give extra information to Plugin users</span>
+                  <br />
                </td>
             </tr>
             <tr>
                <th scope="row">Number of Posts to Create</th>
                <td>
-                  <input type="text" size="57" name="posk_options[num_post_create]" value="<?php echo $options['num_post_create']; ?>" />
+                  <input type="text" size="57" name="scfdc_options[num_post_create]" value="<?php echo $options['num_post_create']; ?>" />
                </td>
             </tr>
             <tr>
                <th scope="row">Title to use</th>
                <td>
-                  <input type="text" size="57" name="posk_options[title]" value="<?php echo $options['title']; ?>" />
+                  <input type="text" size="57" name="scfdc_options[title]" value="<?php echo $options['title']; ?>" />
+                  <span style="color:#666666;margin-left:2px;">You can title your posts here.  Use %%cpt%% to add the custom post type to each post. Ex "My %%cpt%%" could be "My post" or "My page" </span>
                </td>
             </tr>
 
@@ -240,20 +228,33 @@ function posk_render_form() {
             <tr valign="top">
                <th scope="row">Group of Checkboxes</th>
                <td>
-                  <!-- First checkbox button -->
-                  <label><input name="posk_options[chk_button1]" type="checkbox" value="1" <?php if (isset($options['chk_button1'])) { checked('1', $options['chk_button1']); } ?> /> Checkbox #1</label><br />
+               <?php
+                  $scfdc = new scf_dummy(); // call our class
+                  $scf_post_types = $scfdc->scf_registered_post_types();
+                  foreach ($scf_post_types as $scf_post_type ) {
+                     if( $scf_post_type->labels->name == 'Posts' ){
+                        $pt = 'post';
+                     }else if($scf_post_type->labels->name == 'Pages'){
+                        $pt = 'page';
+                     }else{
+                        $pt = $scf_post_type->rewrite[slug];
+                     }
 
-                  <!-- Second checkbox button -->
-                  <label><input name="posk_options[chk_button2]" type="checkbox" value="1" <?php if (isset($options['chk_button2'])) { checked('1', $options['chk_button2']); } ?> /> Checkbox #2 <em>(useful extra information can be added here)</em></label><br />
+                        echo '<label>
+                          <input name="scfdc_options[cpt]['.$pt.']"
+                              type="checkbox"
+                              value="1" ';
 
-                  <!-- Third checkbox button -->
-                  <label><input name="posk_options[chk_button3]" type="checkbox" value="1" <?php if (isset($options['chk_button3'])) { checked('1', $options['chk_button3']); } ?> /> Checkbox #3 <em>(useful extra information can be added here)</em></label><br />
+                              if(isset($options['cpt'][$pt])){
+                                 checked('1',$options['cpt'][$pt]);
+                              }
 
-                  <!-- Fourth checkbox button -->
-                  <label><input name="posk_options[chk_button4]" type="checkbox" value="1" <?php if (isset($options['chk_button4'])) { checked('1', $options['chk_button4']); } ?> /> Checkbox #4 </label><br />
-
-                  <!-- Fifth checkbox button -->
-                  <label><input name="posk_options[chk_button5]" type="checkbox" value="1" <?php if (isset($options['chk_button5'])) { checked('1', $options['chk_button5']); } ?> /> Checkbox #5 </label>
+                           echo '/>
+                             '.$scf_post_type->labels->name.'
+                        </label>
+                        <br />';
+                     }
+               ?>
                </td>
             </tr>
 
@@ -265,12 +266,10 @@ function posk_render_form() {
          </p>
       </form>
 
-
-
-      <form method="post" action="admin.php?page=scf_dummy/scf_dummy.php">
+      <form method="post" action="admin.php?page=scf-dummy/scf-dummy.php">
          <input type="hidden" name="execute" />
-         <?php settings_fields('posk_plugin_options'); ?>
-         <?php $options = get_option('posk_options'); ?>
+         <?php settings_fields('scfdc_plugin_options'); ?>
+         <?php $options = get_option('scfdc_options'); ?>
          <p class="submit">
          <input type="submit" name="scf_execute" class="button-primary" value="<?php _e('Execute') ?>" />
          </p>
@@ -280,7 +279,7 @@ function posk_render_form() {
 }
 
 // Sanitize and validate input. Accepts an array, return a sanitized array.
-function posk_validate_options($input) {
+function scfdc_validate_options($input) {
     // strip html from textboxes
    $input['textarea_one'] =  wp_filter_nohtml_kses($input['textarea_one']); // Sanitize textarea input (strip html tags, and escape characters)
    $input['txt_one'] =  wp_filter_nohtml_kses($input['txt_one']); // Sanitize textbox input (strip html tags, and escape characters)
@@ -288,33 +287,22 @@ function posk_validate_options($input) {
 }
 
 // Display a Settings link on the main Plugins page
-function posk_plugin_action_links( $links, $file ) {
-
+function scfdc_plugin_action_links( $links, $file ) {
    if ( $file == plugin_basename( __FILE__ ) ) {
-      $posk_links = '<a href="'.get_admin_url().'options-general.php?page=plugin-options-starter-kit/plugin-options-starter-kit.php">'.__('Settings').'</a>';
+      $scfdc_links = '<a href="'.get_admin_url().'options-general.php?page=scf-dummy/scf-dummy.php">'.__('Settings').'</a>';
       // make the 'Settings' link appear first
-      array_unshift( $links, $posk_links );
+      array_unshift( $links, $scfdc_links );
    }
-
    return $links;
 }
 
-// ------------------------------------------------------------------------------
-// SAMPLE USAGE FUNCTIONS:
-// ------------------------------------------------------------------------------
-// THE FOLLOWING FUNCTIONS SAMPLE USAGE OF THE PLUGINS OPTIONS DEFINED ABOVE. TRY
-// CHANGING THE DROPDOWN SELECT BOX VALUE AND SAVING THE CHANGES. THEN REFRESH
-// A PAGE ON YOUR SITE TO SEE THE UPDATED VALUE.
-// ------------------------------------------------------------------------------
-
-// As a demo let's add a paragraph of the select box value to the content output
-add_filter( "the_content", "posk_add_content" );
-function posk_add_content($text) {
-   $options = get_option('posk_options');
+function scfdc_add_content($text) {
+   $options = get_option('scfdc_options');
    $select = $options['drp_select_box'];
    $text = "<p style=\"color: #777;border:1px dashed #999; padding: 6px;\">Select box Plugin option is: {$select}</p>{$text}";
    return $text;
 }
-
+add_filter( "the_content", "scfdc_add_content" );
 
 $scf_dummy = new scf_dummy(); // call our class
+
