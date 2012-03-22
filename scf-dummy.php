@@ -7,8 +7,15 @@
 
 /*!
  * @TODO
- *    - incorporate taxonomy.
- *      -create dummy taxonomy then related them to their respective CPT
+ * -create dummy taxonomy then related them to their respective CPT
+ *  -steps to take
+ *   get a list of registered taxonomies
+ *   QUESTION DO IT RELATE POST TO TAX UPON CREATION OR AS A SEPERATE
+ *   FUNCTION????????
+ *
+ *
+ *
+ *
  *
  *
  * \author Steve (3/20/2012)
@@ -32,6 +39,7 @@ class  scf_dummy{
       if (isset( $_POST['scf_execute']) ) {
          add_action( 'init', array($this,'get_options') );
          add_action( 'init', array($this,'active_cpt') );
+         add_action( 'init', array($this,'set_taxonomies') );
       }
    }
 
@@ -131,6 +139,53 @@ class  scf_dummy{
          }
       }
    }
+
+   function get_list_of_taxonomies(){
+      $tax_list = get_taxonomies();
+
+      foreach($tax_list as $tax){
+         $parent_term = term_exists( 'dave' ); // array is returned if taxonomy is given
+         print_r($parent_term);
+         $parent_term_id = $parent_term['term_id']; // get numeric term id
+        // echo 'hhh'  ;
+        // echo $parent_term_id;
+      }
+      return $tax_list;
+   }
+
+   function set_taxonomies(){
+      /*#
+
+        Notes
+        Hooks Used
+
+         This function calls five different hooks:
+
+             create_term
+             create_taxonomy
+             term_id_filter
+             created_term
+             created_$taxonomy
+
+         All five hooks are passed the term id and taxonomy id as parameters.
+
+        */
+
+
+
+      $parent_term = term_exists( 'types' ); // array is returned if taxonomy is given
+      $parent_term_id = $parent_term['term_id']; // get numeric term id
+      wp_insert_term(
+        'Apple', // the term
+        'product', // the taxonomy
+        array(
+          'description'=> 'A yummy apple.',
+          'slug' => 'apple',
+          'parent'=> $parent_term_id
+        )
+      );
+   }
+
 }
 /*===============================
 END OF CLASS
@@ -183,7 +238,9 @@ function scfdc_add_options_page() {
 function scfdc_render_form() {
    ?>
    <div class="wrap">
-
+      <?php
+      $scfdc = new scf_dummy(); // call our class
+      ?>
       <!-- Display Plugin Icon, Header, and Description -->
       <div class="icon32" id="icon-options-general"><br></div>
       <h2>SCF Dummy Content</h2>
@@ -226,10 +283,10 @@ function scfdc_render_form() {
 
             <!-- Checkbox Buttons -->
             <tr valign="top">
-               <th scope="row">Group of Checkboxes</th>
+               <th scope="row">Custom Post Types</th>
                <td>
                <?php
-                  $scfdc = new scf_dummy(); // call our class
+
                   $scf_post_types = $scfdc->scf_registered_post_types();
                   foreach ($scf_post_types as $scf_post_type ) {
                      if( $scf_post_type->labels->name == 'Posts' ){
@@ -251,6 +308,31 @@ function scfdc_render_form() {
 
                            echo '/>
                              '.$scf_post_type->labels->name.'
+                        </label>
+                        <br />';
+                     }
+               ?>
+               </td>
+            </tr>
+
+            <!-- Checkbox Buttons -->
+            <tr valign="top">
+               <th scope="row">Custom Taxonomies</th>
+               <td>
+               <?php
+                  $scf_taxonomies = $scfdc->get_list_of_taxonomies();
+                  foreach ($scf_taxonomies as $scf_taxonomy ) {
+                     echo '<label>
+                          <input name="scfdc_options[tax]['.$scf_taxonomy.']"
+                              type="checkbox"
+                              value="1" ';
+
+                              if(isset($options['tax'][$scf_taxonomy])){
+                                 checked('1',$options['tax'][$scf_taxonomy]);
+                              }
+
+                           echo '/>
+                             '.$scf_taxonomy.'
                         </label>
                         <br />';
                      }
