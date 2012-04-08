@@ -23,10 +23,7 @@
  * \author Steve (3/20/2012)
  */
 
-dddsadsa
-dddsadsa
-dddsadsa
-dddsadsa
+
 class  scf_dummy{
 
    public $_arr_new_post_id = array();
