@@ -7,12 +7,14 @@
 
 /*!
  * @TODO
- * -create dummy taxonomy then related them to their respective CPT
- *  -steps to take
- *   get a list of registered taxonomies
- *   QUESTION DO IT RELATE POST TO TAX UPON CREATION OR AS A SEPERATE
- *   FUNCTION????????
+ * - testing testing and more testing
+ * - clean up code
+ *   - delete any functions not being used
+ *   - look for places to optimize
+ *   - split this file into four (index, model, view, controller)
  *
+ *
+ * @TODO need function to delete terms
  *
  *
  *
@@ -24,6 +26,8 @@
 
 class  scf_dummy{
 
+   public $_arr_new_post_id = array();
+   public $_active_taxonomies = array();
    public $_cpt = array('page', 'post', 'products' );
    public $_tax = array();
    public $_options = array(
@@ -38,8 +42,14 @@ class  scf_dummy{
       add_action( 'admin_init', array($this,'requires_wordpress_version'), 1 );
       if (isset( $_POST['scf_execute']) ) {
          add_action( 'init', array($this,'get_options') );
+         add_action( 'init', array($this,'active_tax') );
          add_action( 'init', array($this,'active_cpt') );
-         add_action( 'init', array($this,'set_taxonomies') );
+         add_action( 'init', array($this,'scf_log_new_posts') );
+         add_action( 'init', array($this,'relate_post_to_tax') );
+      }
+
+      if( isset($_POST['scf_delete']) ) {
+         add_action( 'init', array($this,'scf_clean_up') );
       }
    }
 
@@ -53,7 +63,7 @@ class  scf_dummy{
       }else{
          $title = $local_options['title'];
       }
-
+      $cpt_log = array();
       // Create post object
       for ($i=1; $i<=$local_options['num_post_create']; $i++) {
            $my_post = array(
@@ -66,6 +76,7 @@ class  scf_dummy{
            if(! $new_id = wp_insert_post( $my_post ) ){
               die('cannot create post');
            }
+
 
             $filename = '2012/03/testdenver.jpg';
 
@@ -85,14 +96,44 @@ class  scf_dummy{
         $attach_data = wp_generate_attachment_metadata( $attach_id, $filename );
         wp_update_attachment_metadata( $attach_id, $attach_data );
         update_post_meta($new_id,'_thumbnail_id',$attach_id);
+
+
+        $this->relate_post_to_tax($new_id,$args);
+
+        array_push($cpt_log,$new_id);
+      }
+      $this->_arr_new_post_id[] = array($args => $cpt_log);
+   }
+
+
+   function relate_post_to_tax($scf_new_id, $scf_cpt){
+      foreach ( get_object_taxonomies( $scf_cpt ) as $tax_name ) {
+         $scf_terms = get_terms( $tax_name,array('hide_empty'=>false) );
+         foreach($scf_terms as $scf_term){
+            if( !wp_set_object_terms( $scf_new_id, $scf_term->name, $tax_name,true ) ){
+               die('could not set insareas');
+            }
+         }
       }
    }
+
 
    function active_cpt(){
       $local_options = $this->_custom_options;
       foreach($local_options['cpt'] as $k => $v){
          $this->create_posts($k);
       }
+   }
+
+   function active_tax(){
+      $local_options = $this->_custom_options;
+      $active_taxonomies = array();
+      foreach($local_options['tax'] as $k => $v){
+         $this->set_taxonomies($k);
+         array_push($active_taxonomies, $k);
+      }
+      $this->_active_taxonomies = $active_taxonomies;
+
    }
 
    function scf_get_registered_post_types(){
@@ -142,50 +183,34 @@ class  scf_dummy{
 
    function get_list_of_taxonomies(){
       $tax_list = get_taxonomies();
-
-      foreach($tax_list as $tax){
-         $parent_term = term_exists( 'dave' ); // array is returned if taxonomy is given
-         print_r($parent_term);
-         $parent_term_id = $parent_term['term_id']; // get numeric term id
-        // echo 'hhh'  ;
-        // echo $parent_term_id;
-      }
       return $tax_list;
    }
 
-   function set_taxonomies(){
-      /*#
-
-        Notes
-        Hooks Used
-
-         This function calls five different hooks:
-
-             create_term
-             create_taxonomy
-             term_id_filter
-             created_term
-             created_$taxonomy
-
-         All five hooks are passed the term id and taxonomy id as parameters.
-
-        */
-
-
-
-      $parent_term = term_exists( 'types' ); // array is returned if taxonomy is given
-      $parent_term_id = $parent_term['term_id']; // get numeric term id
-      wp_insert_term(
-        'Apple', // the term
-        'product', // the taxonomy
-        array(
-          'description'=> 'A yummy apple.',
-          'slug' => 'apple',
-          'parent'=> $parent_term_id
-        )
-      );
+   function set_taxonomies($tax){
+      // Create post object
+      $local_options = $this->_custom_options;
+      for ($i=1; $i<=$local_options['num_post_create']; $i++) {
+         wp_insert_term(
+           'Tax term' .$i, // the term
+           $tax
+         );
+      }
    }
 
+   function scf_log_new_posts(){
+      update_option('_scf_new_posts',$this->_arr_new_post_id);
+   }
+
+   function scf_clean_up(){
+      $created_posts = get_option('_scf_new_posts');
+      foreach($created_posts as $created_post){
+         foreach($created_post as $cpt_arr){
+            foreach($cpt_arr as $postid){
+               wp_delete_post( $postid, false );
+            }
+         }
+      }
+   }
 }
 /*===============================
 END OF CLASS
@@ -224,39 +249,35 @@ function scfdc_add_defaults() {
    }
 }
 
-// Init plugin options to white list our options
 function scfdc_init(){
    register_setting( 'scfdc_plugin_options', 'scfdc_options', 'scfdc_validate_options' );
 }
 
-// Add menu page
 function scfdc_add_options_page() {
    add_options_page('SCF Dummy Content Options Page', 'SCF Dummy Content', 'manage_options', __FILE__, 'scfdc_render_form');
 }
 
-// Render the Plugin options form
 function scfdc_render_form() {
    ?>
    <div class="wrap">
       <?php
       $scfdc = new scf_dummy(); // call our class
       ?>
-      <!-- Display Plugin Icon, Header, and Description -->
       <div class="icon32" id="icon-options-general"><br></div>
       <h2>SCF Dummy Content</h2>
       <p>Plugin will populate your site with dummy content</p>
       <?php
          echo '<img src="' .plugins_url( 'testdenver.jpg' , __FILE__ ). '" > ';
       ?>
-      <!-- Beginning of the Plugin Options Form -->
       <form method="post" action="options.php">
          <?php settings_fields('scfdc_plugin_options'); ?>
          <?php $options = get_option('scfdc_options'); ?>
-
-         <!-- Table Structure Containing Form Controls -->
-         <!-- Each Plugin Option Defined on a New Table Row -->
+         <?php
+            foreach( get_option('_scf_new_posts') as $scf_posts){
+               print_r($scf_posts);
+            }
+            ?>
          <table class="form-table">
-            <!-- Text Area Using the Built-in WP Editor -->
             <tr>
                <th scope="row">Content to be added</th>
                <td>
@@ -280,8 +301,6 @@ function scfdc_render_form() {
                   <span style="color:#666666;margin-left:2px;">You can title your posts here.  Use %%cpt%% to add the custom post type to each post. Ex "My %%cpt%%" could be "My post" or "My page" </span>
                </td>
             </tr>
-
-            <!-- Checkbox Buttons -->
             <tr valign="top">
                <th scope="row">Custom Post Types</th>
                <td>
@@ -296,7 +315,6 @@ function scfdc_render_form() {
                      }else{
                         $pt = $scf_post_type->rewrite[slug];
                      }
-
                         echo '<label>
                           <input name="scfdc_options[cpt]['.$pt.']"
                               type="checkbox"
@@ -314,8 +332,6 @@ function scfdc_render_form() {
                ?>
                </td>
             </tr>
-
-            <!-- Checkbox Buttons -->
             <tr valign="top">
                <th scope="row">Custom Taxonomies</th>
                <td>
@@ -356,13 +372,24 @@ function scfdc_render_form() {
          <input type="submit" name="scf_execute" class="button-primary" value="<?php _e('Execute') ?>" />
          </p>
       </form>
+
+      <form method="post" action="admin.php?page=scf-dummy/scf-dummy.php">
+         <input type="hidden" name="delete" />
+         <?php settings_fields('scfdc_plugin_options'); ?>
+         <?php $options = get_option('scfdc_options'); ?>
+         <p class="submit">
+         <input type="submit" name="scf_delete" class="button-primary" value="<?php _e('Delete') ?>" />
+         </p>
+      </form>
    </div>
    <?php
 }
 
-// Sanitize and validate input. Accepts an array, return a sanitized array.
+
+
+
+
 function scfdc_validate_options($input) {
-    // strip html from textboxes
    $input['textarea_one'] =  wp_filter_nohtml_kses($input['textarea_one']); // Sanitize textarea input (strip html tags, and escape characters)
    $input['txt_one'] =  wp_filter_nohtml_kses($input['txt_one']); // Sanitize textbox input (strip html tags, and escape characters)
    return $input;
