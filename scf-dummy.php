@@ -22,6 +22,9 @@
  */
 
 dddsadsa
+dddsadsa
+dddsadsa
+dddsadsa
 class  scf_dummy{
 
    public $_cpt = array('page', 'post', 'products' );
