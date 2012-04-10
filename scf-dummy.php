@@ -15,8 +15,8 @@
  *
  *
  * @TODO need function to delete terms
- *
- *
+ * @TODO stylesheet for this only this plugin
+ * @TODO image uploader so users may choose their own default image
  *
  *
  *
@@ -272,17 +272,12 @@ function scfdc_render_form() {
       <form method="post" action="options.php">
          <?php settings_fields('scfdc_plugin_options'); ?>
          <?php $options = get_option('scfdc_options'); ?>
-         <?php
-            foreach( get_option('_scf_new_posts') as $scf_posts){
-               print_r($scf_posts);
-            }
-            ?>
          <table class="form-table">
             <tr>
                <th scope="row">Content to be added</th>
                <td>
                   <?php
-                     $args = array("textarea_name" => "scfdc_options[content]");
+                     $args = array("textarea_name" => "scfdc_options[content]",'editor_class'=>'width:200px;');
                      wp_editor( $options['content'], "scfdc_options[content]", $args );
                   ?>
                   <br />
@@ -415,3 +410,7 @@ add_filter( "the_content", "scfdc_add_content" );
 
 $scf_dummy = new scf_dummy(); // call our class
 
+function scfdc_adjust_plugin_css(){
+   echo '<style>.wp-editor-container textarea.wp-editor-area{width:200px !important;</style>';
+}
+add_action('admin_head', 'scfdc_adjust_plugin_css');
