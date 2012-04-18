@@ -400,14 +400,6 @@ function scfdc_plugin_action_links( $links, $file ) {
    return $links;
 }
 
-function scfdc_add_content($text) {
-   $options = get_option('scfdc_options');
-   $select = $options['drp_select_box'];
-   $text = "<p style=\"color: #777;border:1px dashed #999; padding: 6px;\">Select box Plugin option is: {$select}</p>{$text}";
-   return $text;
-}
-add_filter( "the_content", "scfdc_add_content" );
-
 $scf_dummy = new scf_dummy(); // call our class
 
 function scfdc_adjust_plugin_css(){
