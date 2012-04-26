@@ -1,8 +1,8 @@
 === Plugin Name ===
 Contributors: stevecfischer
 Tags: content, developer
-Requires at least: 3.2
-Tested up to: 3.2
+Requires at least: 3.3
+Tested up to: 3.3
 Stable tag: 1.0
 
 Quickly populate your site with dummy content.

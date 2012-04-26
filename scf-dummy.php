@@ -14,7 +14,6 @@ License: GPLv2 or later
  * - clean up code
  *   - delete any functions not being used
  *   - look for places to optimize
- *   - split this file into four (index, model, view, controller)
  *
  *
  * @TODO need function to delete terms
@@ -45,11 +44,6 @@ register_uninstall_hook(__FILE__, 'scfdc_delete_plugin_options');
 add_action('admin_init', 'scfdc_init' );
 add_action('admin_menu', 'scfdc_add_options_page');
 add_filter( 'plugin_action_links', 'scfdc_plugin_action_links', 10, 2 );
-
-
-
-
-
 
 
 if (is_admin()) {
