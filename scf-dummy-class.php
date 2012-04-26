@@ -118,18 +118,6 @@ class  scf_dummy{
 
    }
 
-   function scf_get_registered_post_types(){
-      $args=array(
-         'public'   => true,
-         '_builtin' => true
-      );
-      $output = 'objects'; // names or objects
-      $post_types=get_post_types('',$output);
-      foreach ($post_types as $post_type ) {
-        echo '<p>'. $post_type->name . '</p>';
-      }
-   }
-
    function scf_registered_post_types(){
       $args=array(
          'public'   => true,

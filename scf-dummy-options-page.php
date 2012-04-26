@@ -58,7 +58,7 @@ function scfdc_render_form() {
                <th scope="row">Content to be added</th>
                <td>
                   <?php
-                     $args = array("textarea_name" => "scfdc_options[content]",'editor_class'=>'width:200px;');
+                     $args = array("textarea_name" => "scfdc_options[content]");  
                      wp_editor( $options['content'], "scfdc_options[content]", $args );
                   ?>
                   <br />
@@ -88,9 +88,17 @@ function scfdc_render_form() {
                         $pt = 'post';
                      }else if($scf_post_type->labels->name == 'Pages'){
                         $pt = 'page';
-                     }else{
+					 }else{
                         $pt = $scf_post_type->rewrite[slug];
                      }
+					 
+					 if(
+					 $scf_post_type->labels->name == 'Media'  ||
+					 $scf_post_type->labels->name == 'Revisions'  ||
+					 $scf_post_type->labels->name == 'Navigation Menu Items'
+						){
+						// do nothing. I hate doing it this way!!!
+						}else{
                         echo '<label>
                           <input name="scfdc_options[cpt]['.$pt.']"
                               type="checkbox"
@@ -104,6 +112,7 @@ function scfdc_render_form() {
                              '.$scf_post_type->labels->name.'
                         </label>
                         <br />';
+						}
                      }
                ?>
                </td>
@@ -114,6 +123,14 @@ function scfdc_render_form() {
                <?php
                   $scf_taxonomies = $scfdc->get_list_of_taxonomies();
                   foreach ($scf_taxonomies as $scf_taxonomy ) {
+					if(
+					$scf_taxonomy == 'post_tag' ||
+					$scf_taxonomy == 'nav_menu' ||
+					$scf_taxonomy == 'link_category' ||
+					$scf_taxonomy == 'post_format' 
+					){
+					// do nothing. I hate doing it this way!!!
+					}else{
                      echo '<label>
                           <input name="scfdc_options[tax]['.$scf_taxonomy.']"
                               type="checkbox"
@@ -128,6 +145,7 @@ function scfdc_render_form() {
                         </label>
                         <br />';
                      }
+					 }
                ?>
                </td>
             </tr>
@@ -140,7 +158,7 @@ function scfdc_render_form() {
          </p>
       </form>
 
-      <form method="post" action="admin.php?page=scf-dummy/scf-dummy-options-page.php">
+      <form method="post" action="admin.php?page=scf-dummy-content/scf-dummy-options-page.php">
          <input type="hidden" name="execute" />
          <?php settings_fields('scfdc_plugin_options'); ?>
          <?php $options = get_option('scfdc_options'); ?>
@@ -149,7 +167,7 @@ function scfdc_render_form() {
          </p>
       </form>
 
-     <!-- <form method="post" action="admin.php?page=scf-dummy/scf-dummy-options-page.php">
+     <!-- <form method="post" action="admin.php?page=scf-dummy-content/scf-dummy-options-page.php">
          <input type="hidden" name="delete" />
          <?php settings_fields('scfdc_plugin_options'); ?>
          <?php $options = get_option('scfdc_options'); ?>

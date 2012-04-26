@@ -25,16 +25,17 @@ License: GPLv2 or later
  *
  * \author Steve (3/20/2012)
  */
- 
+
+if (is_admin()) { 
  
 if (!defined('SCF_DUMMY_PATH')) {
 	define('SCF_DUMMY_PATH', dirname(__FILE__).'/');
 }
 
-if (is_admin()) {
+
 	// Load admin functionality	
 	require_once SCF_DUMMY_PATH.'scf-dummy-class.php';
-}
+
 
 
 // Set-up Action and Filter Hooks
@@ -64,7 +65,7 @@ function scfdc_validate_options($input) {
 // Display a Settings link on the main Plugins page
 function scfdc_plugin_action_links( $links, $file ) {
    if ( $file == plugin_basename( __FILE__ ) ) {
-      $scfdc_links = '<a href="'.get_admin_url().'options-general.php?page=scf-dummy/scf-dummy.php">'.__('Settings').'</a>';
+      $scfdc_links = '<a href="'.get_admin_url().'options-general.php?page=scf-dummy-content/scf-dummy-options-page.php">'.__('Settings').'</a>';
       // make the 'Settings' link appear first
       array_unshift( $links, $scfdc_links );
    }
@@ -74,7 +75,7 @@ function scfdc_plugin_action_links( $links, $file ) {
 $scf_dummy = new scf_dummy(); // call our class
 
 function scfdc_adjust_plugin_css(){
-   echo '<style>.wp-editor-container textarea.wp-editor-area{width:200px !important;</style>';
+   echo '<style>textarea.wp-editor-area{width:200px !important;}</style>';
 }
 add_action('admin_head', 'scfdc_adjust_plugin_css');
 
@@ -95,7 +96,7 @@ add_action('admin_head', 'scfdc_adjust_plugin_css');
 function image_upload_admin_scripts() {
 wp_enqueue_script('media-upload');
 wp_enqueue_script('thickbox');
-wp_register_script('my-upload', WP_PLUGIN_URL.'/scf-dummy/js/scf.jquery.plugin.js', array('jquery','media-upload','thickbox'));
+wp_register_script('my-upload', WP_PLUGIN_URL.'/scf-dummy-content/js/scf.jquery.plugin.js', array('jquery','media-upload','thickbox'));
 wp_enqueue_script('my-upload');
 }
 
@@ -103,7 +104,9 @@ function image_upload_admin_styles() {
 wp_enqueue_style('thickbox');
 }
 
-if (isset($_GET['page']) && $_GET['page'] == 'scf-dummy/scf-dummy-options-page.php') {
+if (isset($_GET['page']) && $_GET['page'] == 'scf-dummy-content/scf-dummy-options-page.php') {
 add_action('admin_print_scripts', 'image_upload_admin_scripts');
 add_action('admin_print_styles', 'image_upload_admin_styles');
+}
+
 }
