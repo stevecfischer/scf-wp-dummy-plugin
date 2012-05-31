@@ -1,0 +1,11 @@
+.wp-editor-wrap.html-active, .wp-editor-wrap.tmce-active{
+   width:500px;
+}
+.form-table{
+     width:780px;
+     margin: 0 auto !important;
+}
+.italic-link{
+   font-style:italic;
+   font-size:10px;
+}

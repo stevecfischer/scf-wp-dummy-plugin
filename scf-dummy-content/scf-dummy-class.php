@@ -1,8 +1,15 @@
 <?php
+/*!
+ * Notes: finished adding function to delete all posts and terms my plugin
+ * creates.  so basically it inflates and deflates a theme.
+ * the problem is how to handle things when it gets ran multiple times.
+ * maybe check for the option. if option(_scf_new_posts) isset add to it else
+ * just populate it....???
+ */
 class  scf_dummy{
 
    public $_arr_new_post_id = array();
-   public $_arr_new_tax_id = array();
+   public $_arr_new_term_id = array();
    public $_active_taxonomies = array();
    public $_cpt = array('page', 'post', 'products' );
    public $_tax = array();
@@ -21,11 +28,12 @@ class  scf_dummy{
          add_action( 'admin_init', array($this,'active_tax') );
          add_action( 'admin_init', array($this,'active_cpt') );
          add_action( 'admin_init', array($this,'scf_log_new_posts') );
-         add_action( 'admin_init', array($this,'relate_post_to_tax') );         
+         add_action( 'admin_init', array($this,'relate_post_to_tax') );
+         add_action( 'admin_init', array($this,'scf_log_new_terms') );
       }
 
       if( isset($_POST['scf_delete']) ) {
-         add_action( 'admin_init', array($this,'scf_clean_up') );
+         add_action( 'admin_init', array($this,'scf_clean_up_posts') );
       }
    }
 
@@ -39,6 +47,8 @@ class  scf_dummy{
 
       if( preg_match($title_helper_pattern, $local_options['title'], $matches) ){
          $title = preg_replace($title_helper_pattern, $args, $local_options['title']);
+      }elseif(empty($local_options['title']) ){
+         $title = $args;
       }else{
          $title = $local_options['title'];
       }
@@ -94,9 +104,9 @@ class  scf_dummy{
          foreach($scf_terms as $scf_term){
             if( ! $new_tax_id = wp_set_object_terms( $scf_new_id, $scf_term->name, $tax_name,true ) ){
                die('could not set insareas');
-            }                        
+            }
          }
-      }     
+      }
    }
 
 
@@ -157,29 +167,71 @@ class  scf_dummy{
    }
 
    function set_taxonomies($tax){
+      $term_log = array();
       $local_options = $this->_custom_options;
       for ($i=1; $i<=$local_options['num_post_create']; $i++) {
-         wp_insert_term( $tax .' term' .$i, $tax );
-      }
+        $title_helper_pattern = "/%%[\s\S]*?%%/";
+        if( preg_match($title_helper_pattern, $local_options['title_tax'], $matches) ){
+            $title = preg_replace($title_helper_pattern, ucwords($tax), $local_options['title_tax']);
+            //$new_term = wp_insert_term( $title.'&nbsp;'.$i, $tax );
+        }elseif(empty($local_options['title_tax']) ){
+            $title = ucwords($tax);
+            //$new_term = wp_insert_term( ucwords($tax).'&nbsp;'.$i, $tax );
+        }else{
+            $title = $local_options['title_tax'];
+            //$new_term = wp_insert_term( $local_options['title_tax'].'&nbsp;'.$i, $tax );
+        }
+
+         $term = term_exists( $title.'ddd&nbsp;'.$i, $tax);
+
+         if ($term === 0) {
+           //term exists so skip the rest
+            $new_term = "$term -- term exists";
+         }else{
+           $new_term = wp_insert_term( $title.'&nbsp;'.$i, $tax );
+         }
+
+        array_push($term_log,$new_term);
+     }
+      $this->_arr_new_term_id[] = array($tax => $term_log);
    }
 
    function scf_log_new_posts(){
       update_option('_scf_new_posts',$this->_arr_new_post_id);
    }
 
+   function scf_log_new_terms(){
+      update_option('_scf_new_terms',$this->_arr_new_term_id);
+   }
+
    function scf_clean_up_posts(){
+      /*
+      @TODO: need to make this function more efficent. too many loops.
+      */
+      $created_terms = get_option('_scf_new_terms');
+      foreach($created_terms as $tax_key => $tax_val){
+         foreach($tax_val as $term_key => $term_val){
+            foreach($term_val as $term_id){
+               if(! wp_delete_term( $term_id['term_id'], $term_key) ){
+                  die('Error deleting Term');
+               }
+            }
+         }
+      }
+
+
       $created_posts = get_option('_scf_new_posts');
       foreach($created_posts as $created_post){
          foreach($created_post as $cpt_arr){
             foreach($cpt_arr as $postid){
-               wp_delete_post( $postid, false );
+               if(! wp_delete_post( $postid, false )){
+                  die('Error deleting Post');
+               }
             }
          }
       }
+
    }//EOF
-
-   //@TODO : create function to log terms created and function to delete them
-
 }
 /*===============================
 END OF CLASS

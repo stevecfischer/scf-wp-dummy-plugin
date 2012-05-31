@@ -1,6 +1,4 @@
 <?php
-
-
 // Delete options table entries ONLY when plugin deactivated AND deleted
 function scfdc_delete_plugin_options() {
    delete_option('scfdc_options');
@@ -27,58 +25,86 @@ function scfdc_add_options_page() {
    add_options_page('SCF Dummy Content Options Page', 'SCF Dummy Content', 'manage_options', __FILE__, 'scfdc_render_form');
 }
 
-
-
-
 function scfdc_render_form() {
    ?>
    <div class="wrap">
       <?php
       $scfdc = new scf_dummy(); // call our class
       ?>
-      <div class="icon32" id="icon-options-general"><br></div>
+      <div class="icon32" id="icon-options-general"><br /></div>
       <h2>SCF Dummy Content</h2>
-      <p>Plugin will populate your site with dummy content</p>
+      <p>Plugin to quickly populate your site with dummy content.</p>
+      <p>How to use:<br />
+        <ol>
+            <li>First upload an image if you want to see featured images.</li>
+            <li>Next either use the default editor text or insert your own.</li>
+            <li>Next enter the number of posts you want to create for each post type.</li>
+            <li>Then create the default title for each post. (** NOTE: the number of each post will be automatically added to each post title.)</li>
+            <li>Lastly choose which taxonomies to create terms for and which post types to create posts for.</li>
+            <li>Save the options before you execute.</li>
+        </ol>
+      </p>
       <form method="post" action="options.php">
          <?php settings_fields('scfdc_plugin_options'); ?>
          <?php $options = get_option('scfdc_options'); ?>
-         <?php
-            echo '<img src="'.$options['upload_image'].'" > ';
-         ?>
+
          <table class="form-table">
             <tr valign="top">
-            <th scope="row">Upload Image</th>
-            <td><label for="upload_image">
-            <input id="upload_image" type="text" size="36" name="scfdc_options[upload_image]" value="<?php echo $options['upload_image']; ?>" />
-            <input id="upload_image_button" type="button" value="Upload Image" />
-            <br />Enter an URL or upload an image for the banner.
-            </label></td>
+                 <td scope="row">Upload Image</td>
+                 <td><label for="upload_image">
+                 <input id="upload_image" type="text" size="36" name="scfdc_options[upload_image]" value="<?php echo $options['upload_image']; ?>" />
+                 <input id="upload_image_button" type="button" value="Upload Image" />
+                 <br />Enter an URL or upload an image for the banner.
+                 </label></td>
             </tr>
-            <tr>
-               <th scope="row">Content to be added</th>
+          <tr>
+               <td></td>
+               <td>
+               <?php
+               echo '<img width="100px" src="'.$options['upload_image'].'" /> ';
+               ?>
+               </td>
+          </tr>
+          <tr>
+               <td scope="row">Content to be added. <br /><span class="italic-link"><a rel="nofollow" href="http://html-ipsum.com">HTML Ipsum Generator</a></span></td>
                <td>
                   <?php
-                     $args = array("textarea_name" => "scfdc_options[content]");  
+                     $args = array("textarea_name" => "scfdc_options[content]");
                      wp_editor( $options['content'], "scfdc_options[content]", $args );
                   ?>
                   <br />
                </td>
             </tr>
             <tr>
-               <th scope="row">Number of Posts to Create</th>
+               <td scope="row">Number of Posts to Create</td>
                <td>
                   <input type="text" size="57" name="scfdc_options[num_post_create]" value="<?php echo $options['num_post_create']; ?>" />
                </td>
             </tr>
             <tr>
-               <th scope="row">Title to use</th>
+               <td scope="row">Post Title to use</td>
                <td>
                   <input type="text" size="57" name="scfdc_options[title]" value="<?php echo $options['title']; ?>" />
-                  <span style="color:#666666;margin-left:2px;">You can title your posts here.  Use %%cpt%% to add the custom post type to each post. Ex "My %%cpt%%" could be "My post" or "My page" </span>
+                  <span style="color:#666666;margin-left:2px;"><br />
+                    Defaults to: "post_type name + number of post". Ex: "Page 1", "Page 2", "Page 3".<br />
+                    Shortcode Option:<br />
+                        - %%cpt%% <br />
+                    Ex: "Project SCF %%cpt%%" results in "Project SCF Post 1", "Project SCF Post 2".</span>
+               </td>
+            </tr>
+          <tr>
+               <td scope="row">Taxonomy Title to use</td>
+               <td>
+                  <input type="text" size="57" name="scfdc_options[title_tax]" value="<?php echo $options['title_tax']; ?>" />
+                    <span style="color:#666666;margin-left:2px;"><br />
+                    Defaults to: "taxonomy name + number of term". Ex: "Category 1", "Category 2".<br />
+                    Shortcode Option:<br />
+                        - %%tax%% <br />
+                    Ex: "Project SCF %%tax%%" results in "Project SCF Category 1", "Project SCF Category 2".</span>
                </td>
             </tr>
             <tr valign="top">
-               <th scope="row">Custom Post Types</th>
+               <td scope="row">Custom Post Types</td>
                <td>
                <?php
 
@@ -88,17 +114,17 @@ function scfdc_render_form() {
                         $pt = 'post';
                      }else if($scf_post_type->labels->name == 'Pages'){
                         $pt = 'page';
-					 }else{
+                }else{
                         $pt = $scf_post_type->rewrite[slug];
                      }
-					 
-					 if(
-					 $scf_post_type->labels->name == 'Media'  ||
-					 $scf_post_type->labels->name == 'Revisions'  ||
-					 $scf_post_type->labels->name == 'Navigation Menu Items'
-						){
-						// do nothing. I hate doing it this way!!!
-						}else{
+
+                if(
+                $scf_post_type->labels->name == 'Media'  ||
+                $scf_post_type->labels->name == 'Revisions'  ||
+                $scf_post_type->labels->name == 'Navigation Menu Items'
+                  ){
+                  // do nothing. I hate doing it this way!!!
+                  }else{
                         echo '<label>
                           <input name="scfdc_options[cpt]['.$pt.']"
                               type="checkbox"
@@ -112,25 +138,25 @@ function scfdc_render_form() {
                              '.$scf_post_type->labels->name.'
                         </label>
                         <br />';
-						}
+                  }
                      }
                ?>
                </td>
             </tr>
             <tr valign="top">
-               <th scope="row">Custom Taxonomies</th>
+               <td scope="row">Custom Taxonomies</td>
                <td>
                <?php
                   $scf_taxonomies = $scfdc->get_list_of_taxonomies();
                   foreach ($scf_taxonomies as $scf_taxonomy ) {
-					if(
-					$scf_taxonomy == 'post_tag' ||
-					$scf_taxonomy == 'nav_menu' ||
-					$scf_taxonomy == 'link_category' ||
-					$scf_taxonomy == 'post_format' 
-					){
-					// do nothing. I hate doing it this way!!!
-					}else{
+               if(
+               $scf_taxonomy == 'post_tag' ||
+               $scf_taxonomy == 'nav_menu' ||
+               $scf_taxonomy == 'link_category' ||
+               $scf_taxonomy == 'post_format'
+               ){
+               // do nothing. I hate doing it this way!!!
+               }else{
                      echo '<label>
                           <input name="scfdc_options[tax]['.$scf_taxonomy.']"
                               type="checkbox"
@@ -145,7 +171,7 @@ function scfdc_render_form() {
                         </label>
                         <br />';
                      }
-					 }
+                }
                ?>
                </td>
             </tr>
@@ -163,18 +189,18 @@ function scfdc_render_form() {
          <?php settings_fields('scfdc_plugin_options'); ?>
          <?php $options = get_option('scfdc_options'); ?>
          <p class="submit">
-         <input type="submit" name="scf_execute" class="button-primary" value="<?php _e('Execute') ?>" />
+         <input type="submit" id="scf-execute-submit" name="scf_execute" class="button-primary" value="<?php _e('Execute') ?>" />
          </p>
       </form>
 
-     <!-- <form method="post" action="admin.php?page=scf-dummy-content/scf-dummy-options-page.php">
+      <form method="post" action="admin.php?page=scf-dummy-content/scf-dummy-options-page.php">
          <input type="hidden" name="delete" />
          <?php settings_fields('scfdc_plugin_options'); ?>
          <?php $options = get_option('scfdc_options'); ?>
          <p class="submit">
-         <input type="submit" name="scf_delete" class="button-primary" value="<?php _e('Delete') ?>" />
+         <input type="submit" id="scf-delete-submit" name="scf_delete" class="button-primary" value="<?php _e('Delete') ?>" />
          </p>
-      </form> -->
+      </form>
    </div>
    <?php
 }
